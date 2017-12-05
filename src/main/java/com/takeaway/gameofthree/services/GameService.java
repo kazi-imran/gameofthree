@@ -1,9 +1,13 @@
 package com.takeaway.gameofthree.services;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -13,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 public class GameService {
 
 	@Autowired
-	NumberService numberService;
+	GenerateNumberService numberService;
 	@Autowired
 	private ApplicationContext context;
 	@Autowired
@@ -24,6 +28,15 @@ public class GameService {
 	
 	@Autowired
 	private RestTemplate restTemplate;
+	
+	@Autowired
+	private ExecutorService player1;
+	
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
+	
+	@Autowired
+	private GenerateNumberService service;
 
 	private volatile AtomicInteger numberOfPlayers = new AtomicInteger(0);
 
@@ -37,14 +50,28 @@ public class GameService {
 		}
 
 	}
-
+	
+	@Autowired
 	public void startGame() {
 		// This task will be executed once all thread reaches barrier
 		System.out.println("Game Has Started");
-		int randomNumber = numberService.generateRandomNumber();
-		restTemplate.postForObject("http://localhost:8080/player2", "Just A Message",String.class);
-		messaging.convertAndSend("/app/playertwo", randomNumber);
-
+		Future<AtomicInteger> result = player1.submit(service);
+		if( result.isDone())
+		{
+			try
+			{
+				this.applicationEventPublisher.publishEvent(new NumberSendEvent(result.get()));
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				
+			}
+		}
+		}
+	
+	public void handlePlayerTwoRecievedNumber(Integer receivedNumber)
+	{
+		System.out.println("player 2 received number"+receivedNumber);
 	}
 
 	public AtomicInteger getNumberOfPlayers() {

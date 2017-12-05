@@ -33,7 +33,7 @@ public class RootController {
 		
 	}	
 	
-	@RequestMapping(value="/player2",method = RequestMethod.POST)
+	@RequestMapping(value="/player1",method = RequestMethod.POST)
 	public void playerOneReceivesMessage(@RequestBody int number)
 	{
 		System.out.println("Player One received Message" + number);
@@ -44,7 +44,7 @@ public class RootController {
 	@RequestMapping(value="/player2",method = RequestMethod.POST)
 	public void playerTwoReceivesMessage(@RequestBody int number)
 	{
-		System.out.println("Player Two received Message" + number);
+		gameService.handlePlayerTwoRecievedNumber(number);
 		
 	}	
 	
